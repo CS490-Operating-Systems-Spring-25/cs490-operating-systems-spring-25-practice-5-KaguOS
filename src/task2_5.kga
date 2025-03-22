@@ -1,0 +1,403 @@
+var diskname
+var partname
+var disk
+var counter
+var partNamedisk
+var first 
+var partitionstart
+var partitionfinish
+var fsstart
+var fsfinish
+var second 
+var firstblock
+var secondblock
+var partitionstart1
+
+write "Enter disk name:" to DISPLAY_BUFFER  
+write OP_DISPLAY_LN to REG_OP
+cpu_exec
+
+write OP_READ_INPUT to REG_OP
+write KEYBOARD_READ_LINE to KEYBOARD_BUFFER
+cpu_exec
+copy KEYBOARD_BUFFER to var:diskname
+
+write "Enter partition name:" to DISPLAY_BUFFER  
+write OP_DISPLAY_LN to REG_OP
+cpu_exec
+
+write OP_READ_INPUT to REG_OP
+write KEYBOARD_READ_LINE to KEYBOARD_BUFFER
+cpu_exec
+copy KEYBOARD_BUFFER to var:partname
+
+write 4 to var:counter
+
+label checkpartitionexist
+    copy var:diskname to REG_A
+    copy var:counter to REG_B
+    write OP_READ_BLOCK to REG_OP  
+    cpu_exec
+
+    copy REG_RES to var:disk
+
+    copy var:disk to REG_A
+    write 2 to REG_B
+    write " " to REG_C
+    write OP_GET_COLUMN to REG_OP  
+    cpu_exec
+
+    copy REG_RES to var:partNamedisk
+
+    copy var:partNamedisk to REG_A
+    copy var:partname to REG_B
+    write OP_CMP_EQ to REG_OP  
+    cpu_exec
+    jump_if label:partitionfound  
+
+    copy var:disk to REG_A
+    write "END_PARTITION_TABLE" to REG_B
+    write OP_CMP_EQ to REG_OP  
+    cpu_exec
+    jump_if label:partnotexist   
+    copy var:counter to REG_A
+    write OP_INCR to REG_OP  
+    cpu_exec
+    copy REG_RES to var:counter
+    jump label:checkpartitionexist  
+
+label partnotexist
+    write "Partition does not exist." to DISPLAY_BUFFER
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    write OP_HALT to REG_OP
+    cpu_exec
+
+label partitionfound
+    copy var:disk to REG_A
+    write 4 to REG_B
+    write " " to REG_C
+    write OP_GET_COLUMN to REG_OP
+    cpu_exec
+    copy REG_RES to var:partitionstart
+
+    copy var:disk to REG_A
+    write 6 to REG_B
+    write " " to REG_C
+    write OP_GET_COLUMN to REG_OP
+    cpu_exec
+    copy REG_RES to var:partitionfinish
+
+    write "Partition exists!" to DISPLAY_BUFFER
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    jump label:checkheader
+
+label checkheader
+    copy var:partitionstart to REG_B
+    copy var:diskname to REG_A
+    write OP_READ_BLOCK to REG_OP
+    cpu_exec
+    copy REG_RES to var:disk
+
+    copy var:disk to REG_A
+    write "FS_HEADER" to REG_B
+    write OP_STARTS_WITH to REG_OP
+    cpu_exec
+    jump_if label:checkrow
+    
+
+label checkrow
+    copy var:disk to REG_A
+    write 1 to REG_B
+    write " " to REG_C
+    write OP_GET_COLUMN to REG_OP
+    cpu_exec
+    copy REG_RES to var:first
+
+    copy var:first to REG_A
+    write "FS_HEADER" to REG_B
+    write OP_CMP_EQ to REG_OP
+    cpu_exec
+    jump_if_not label:incorrectheader
+
+    copy var:disk to REG_A
+    write 2 to REG_B
+    write " " to REG_C
+    write OP_GET_COLUMN to REG_OP
+    cpu_exec
+    copy REG_RES to var:first
+
+    copy var:first to REG_A
+    write "kagu_fs" to REG_B
+    write OP_CMP_EQ to REG_OP
+    cpu_exec
+    jump_if_not label:incorrectheader
+
+    copy var:disk to REG_A
+    write 3 to REG_B
+    write " " to REG_C
+    write OP_GET_COLUMN to REG_OP
+    cpu_exec
+    copy REG_RES to var:first
+
+    copy var:first to REG_A
+    write "FIRST_USABLE_BLOCK" to REG_B
+    write OP_CMP_EQ to REG_OP
+    cpu_exec
+    jump_if_not label:incorrectheader
+
+    copy var:disk to REG_A
+    write 4 to REG_B
+    write " " to REG_C
+    write OP_GET_COLUMN to REG_OP
+    cpu_exec
+    copy REG_RES to var:first
+    copy REG_RES to var:partitionstart1
+
+    copy var:first to REG_A
+    write OP_IS_NUM to REG_OP
+    cpu_exec
+    jump_if_not label:incorrectheader    
+    copy var:first to var:fsstart
+
+    copy var:disk to REG_A
+    write 5 to REG_B
+    write " " to REG_C
+    write OP_GET_COLUMN to REG_OP
+    cpu_exec
+    copy REG_RES to var:first
+
+    copy var:first to REG_A
+    write "LAST_USABLE_BLOCK" to REG_B
+    write OP_CMP_EQ to REG_OP
+    cpu_exec
+    jump_if_not label:incorrectheader
+
+    copy var:disk to REG_A
+    write 6 to REG_B
+    write " " to REG_C
+    write OP_GET_COLUMN to REG_OP
+    cpu_exec
+    copy REG_RES to var:first
+
+    copy var:first to REG_A
+    write OP_IS_NUM to REG_OP
+    cpu_exec
+    jump_if_not label:incorrectheader
+    copy var:first to var:fsfinish
+    jump label:checksize
+
+label checksize
+    copy var:partitionstart to REG_A
+    copy var:fsstart to REG_B
+    write OP_CMP_LT to REG_OP
+    cpu_exec
+    jump_if_not label:invalidsizefs
+
+    copy var:partitionfinish to REG_A
+    copy var:fsstart to REG_B
+    write OP_CMP_LT to REG_OP
+    cpu_exec
+    jump_if label:invalidsizefs
+
+    copy var:partitionstart to REG_A
+    copy var:fsfinish to REG_B
+    write OP_CMP_LT to REG_OP
+    cpu_exec
+    jump_if_not label:invalidsizefs
+
+    copy var:partitionfinish to REG_A
+    copy var:fsfinish to REG_B
+    write OP_CMP_LT to REG_OP
+    cpu_exec
+    jump_if label:invalidsizefs
+
+    jump label:correctheader
+
+label  invalidsizefs
+    write "Incorrect size." to DISPLAY_BUFFER
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    write OP_HALT to REG_OP
+    cpu_exec
+
+label incorrectheader
+    write "Incorrect header." to DISPLAY_BUFFER
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    write OP_HALT to REG_OP
+    cpu_exec
+
+label correctheader
+    write "correct header." to DISPLAY_BUFFER
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    copy var:partitionstart to REG_A
+    write OP_INCR to REG_OP
+    cpu_exec
+    copy REG_RES to var:partitionstart
+    jump label:checkfileheader
+
+label checkfileheader
+    copy var:partitionstart to REG_B
+    copy var:diskname to REG_A
+    write OP_READ_BLOCK to REG_OP
+    cpu_exec
+    copy REG_RES to var:disk
+    
+    copy var:disk to REG_A
+    write "" to REG_B
+    write OP_CMP_EQ to REG_OP
+    cpu_exec
+    jump_if label:checkend
+
+    label checkfilerow
+
+        copy var:disk to REG_A
+        write 2 to REG_B
+        write " " to REG_C
+        write OP_GET_COLUMN to REG_OP
+        cpu_exec
+        copy REG_RES to var:second
+
+        copy var:second to REG_A
+        write OP_IS_NUM to REG_OP
+        cpu_exec
+        jump_if_not label:incorrectfile
+
+        copy var:second to REG_A
+        write 7 to REG_B
+        write OP_CMP_LE to REG_OP
+        cpu_exec
+        jump_if_not label:incorrectfile
+
+        copy var:disk to REG_A
+        write 3 to REG_B
+        write " " to REG_C
+        write OP_GET_COLUMN to REG_OP
+        cpu_exec
+        copy REG_RES to var:second
+
+        copy var:second to REG_A
+        write OP_IS_NUM to REG_OP
+        cpu_exec
+        jump_if_not label:incorrectfile
+
+        copy var:second to REG_A
+        write 7 to REG_B
+        write OP_CMP_LE to REG_OP
+        cpu_exec
+        jump_if_not label:incorrectfile
+
+        copy var:disk to REG_A
+        write 4 to REG_B
+        write " " to REG_C
+        write OP_GET_COLUMN to REG_OP
+        cpu_exec
+        copy REG_RES to var:second
+
+        copy var:second to REG_A
+        write OP_IS_NUM to REG_OP
+        cpu_exec
+        jump_if_not label:incorrectfile
+
+        copy var:second to REG_A
+        write 7 to REG_B
+        write OP_CMP_LE to REG_OP
+        cpu_exec
+        jump_if_not label:incorrectfile
+
+        write 8 to var:counter
+        label checkpairs
+            copy var:disk to REG_A
+            copy var:counter to REG_B
+            write " " to REG_C
+            write OP_GET_COLUMN to REG_OP
+            cpu_exec
+            copy REG_RES to var:firstblock
+
+            copy var:firstblock to REG_A
+            write OP_IS_NUM to REG_OP
+            cpu_exec
+            jump_if_not label:incorrectfile
+
+            copy var:counter to REG_A
+            write OP_INCR to REG_OP
+            cpu_exec
+            copy REG_RES to var:counter
+
+            copy var:disk to REG_A
+            copy var:counter to REG_B
+            write " " to REG_C
+            write OP_GET_COLUMN to REG_OP
+            cpu_exec
+            copy REG_RES to var:secondblock
+
+            copy var:secondblock to REG_A
+            write "" to REG_B
+            write OP_CMP_EQ to REG_OP
+            cpu_exec
+            jump_if label:incorrectfile
+
+            copy var:secondblock to REG_A
+            write OP_IS_NUM to REG_OP
+            cpu_exec
+            jump_if_not label:incorrectfile
+
+            copy var:firstblock to REG_A
+            copy var:secondblock to REG_B
+            write OP_CMP_LT to REG_OP
+            cpu_exec
+            jump_if_not label:incorrectfile
+
+            jump label:correctfile
+
+label checkend
+    copy var:partitionstart1 to REG_A
+    write OP_DECR to REG_OP
+    cpu_exec
+    copy REG_RES to var:partitionstart1
+
+    copy var:partitionstart1 to REG_B
+    copy var:diskname to REG_A
+    write OP_READ_BLOCK to REG_OP
+    cpu_exec
+    copy REG_RES to var:disk
+
+    copy var:disk to REG_A
+    write "FS_HEADER_END" to REG_B
+    write OP_CMP_EQ to REG_OP
+    cpu_exec
+    jump_if_not label:incorrectfinish
+    jump label:exit
+
+label incorrectfinish
+    write "Incorrect FS_HEADER_END part." to DISPLAY_BUFFER
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    write OP_HALT to REG_OP
+    cpu_exec
+
+label incorrectfile
+    write "Incorrect file header." to DISPLAY_BUFFER
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    write OP_HALT to REG_OP
+    cpu_exec
+
+label correctfile
+    write "correct current file header." to DISPLAY_BUFFER
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    copy var:partitionstart to REG_A
+    write OP_INCR to REG_OP
+    cpu_exec
+    copy REG_RES to var:partitionstart
+    jump label:checkfileheader
+
+label exit
+    write OP_HALT to REG_OP
+    cpu_exec
+    
+    
