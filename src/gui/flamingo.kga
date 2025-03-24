@@ -1,0 +1,463 @@
+label kernel_entry_point
+
+DEBUG_OFF
+
+write "Operation register:" to INFO_REG_OP
+write "A register:" to INFO_REG_A
+write "B register:" to INFO_REG_B
+write "C register:" to INFO_REG_C
+write "D register:" to INFO_REG_D
+write "Result register:" to INFO_REG_RES
+write "Comparison result register:" to INFO_REG_BOOL_RES
+write "Error register:" to INFO_REG_ERROR
+write "Display buffer:" to INFO_DISPLAY_BUFFER
+write "Display color:" to INFO_DISPLAY_COLOR
+write "Keyboard buffer:" to INFO_KEYBOARD_BUFFER
+write "Display background:" to INFO_DISPLAY_BACKGROUND
+write "Program counter:" to INFO_PROGRAM_COUNTER
+write "Free memory start:" to INFO_FREE_MEMORY_START
+write "Free memory end:" to INFO_FREE_MEMORY_END
+write "Free chunks:" to INFO_FREE_CHUNKS
+write "" to FREE_CHUNKS
+
+// Let's init pointer to the stack
+//      var:sys_stack_ptr = FREE_MEMORY_END + 1
+// Therefore on any push to stack we will decrement it
+// If sys_stack_pop will be called incorrectly then we will get crashed
+copy FREE_MEMORY_END to REG_A
+write OP_INCR to REG_OP
+cpu_exec
+copy REG_RES to var:sys_stack_ptr
+
+// Global variables
+// Store initial FREE_MEMORY_START for reference
+var sys_bitmap_start
+var sys_bitmap_ptr
+var sys_bitmap_copy_ptr
+var sys_input_char
+var sys_bitmap_copy_start
+var sys_shift_index
+
+label initialize_bitmap
+
+    // Set the starting memory location for bitmap storage
+    copy FREE_MEMORY_START to var:sys_bitmap_start
+    copy var:sys_bitmap_start to var:sys_bitmap_ptr  // Initialize pointer
+
+    copy var:sys_bitmap_start to REG_A
+    write 20 to REG_B
+    write OP_ADD to REG_OP
+    cpu_exec
+    copy REG_RES to var:sys_bitmap_copy_start
+    copy REG_RES to var:sys_bitmap_copy_ptr
+
+    // Load bitmap dynamically into memory
+    write "recording bitmap..." to DISPLAY_BUFFER
+    write COLOR_BLUE to DISPLAY_COLOR
+
+    // First row
+    write "bbbrrrbbb" to *var:sys_bitmap_ptr
+    write "bbbrrrbbb" to *var:sys_bitmap_copy_ptr
+    write OP_DISPLAY_LN to REG_OP
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr_copy
+    write "byyrrrrbb" to *var:sys_bitmap_ptr
+    write "byyrrrrbb" to *var:sys_bitmap_copy_ptr
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr_copy
+    write "bybbbrrbb" to *var:sys_bitmap_ptr
+    write "bybbbrrbb" to *var:sys_bitmap_copy_ptr
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr_copy
+    write "bbbbrrbbb" to *var:sys_bitmap_ptr
+    write "bbbbrrbbb" to *var:sys_bitmap_copy_ptr
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr_copy
+    write "bbbrrbbbb" to *var:sys_bitmap_ptr
+    write "bbbrrbbbb" to *var:sys_bitmap_copy_ptr
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr_copy
+    write "bbrrbbbbb" to *var:sys_bitmap_ptr
+    write "bbrrbbbbb" to *var:sys_bitmap_copy_ptr
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr_copy
+    write "brrbbbbbb" to *var:sys_bitmap_ptr
+    write "brrbbbbbb" to *var:sys_bitmap_copy_ptr
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr_copy
+    write "rrrrrrrbb" to *var:sys_bitmap_ptr
+    write "rrrrrrrbb" to *var:sys_bitmap_copy_ptr
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr_copy
+    write "rrrrrrrrb" to *var:sys_bitmap_ptr
+    write "rrrrrrrrb" to *var:sys_bitmap_copy_ptr
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr_copy
+    write "brrrrrrrr" to *var:sys_bitmap_ptr
+    write "brrrrrrrr" to *var:sys_bitmap_copy_ptr
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr_copy
+    write "bbrrrrrbb" to *var:sys_bitmap_ptr
+    write "bbrrrrrbb" to *var:sys_bitmap_copy_ptr
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr_copy
+    write "bbbbyybbb" to *var:sys_bitmap_ptr
+    write "bbbbyybbb" to *var:sys_bitmap_copy_ptr
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr_copy
+    write "bbbbybybb" to *var:sys_bitmap_ptr
+    write "bbbbybybb" to *var:sys_bitmap_copy_ptr
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr_copy
+    write "bbbbybbyb" to *var:sys_bitmap_ptr
+    write "bbbbybbyb" to *var:sys_bitmap_copy_ptr
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr_copy
+    write "bbbyyyybb" to *var:sys_bitmap_ptr
+    write "bbbyyyybb" to *var:sys_bitmap_copy_ptr
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr_copy
+    write "bbybybbbb" to *var:sys_bitmap_ptr
+    write "bbybybbbb" to *var:sys_bitmap_copy_ptr
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr_copy
+    write "bbybybbbb" to *var:sys_bitmap_ptr
+    write "bbybybbbb" to *var:sys_bitmap_copy_ptr
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr_copy
+    write "bbbbybbbb" to *var:sys_bitmap_ptr
+    write "bbbbybbbb" to *var:sys_bitmap_copy_ptr
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr_copy
+    write "bbbbybbbb" to *var:sys_bitmap_ptr
+    write "bbbbybbbb" to *var:sys_bitmap_copy_ptr
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr_copy
+    write "bbyyybbbb" to *var:sys_bitmap_ptr
+    write "bbyyybbbb" to *var:sys_bitmap_copy_ptr
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:increment_ptr_copy
+
+    jump label:main_loop
+
+label increment_ptr
+    copy PROGRAM_COUNTER to var:sys_stack_return
+    jump label:sys_stack_push
+    
+    // Increment pointer to store the next row in memory
+    copy var:sys_bitmap_ptr to REG_A
+    write OP_INCR to REG_OP
+    cpu_exec
+    copy REG_RES to var:sys_bitmap_ptr
+    jump label:sys_stack_pop
+
+label increment_ptr_copy
+    copy PROGRAM_COUNTER to var:sys_stack_return
+    jump label:sys_stack_push
+
+    copy var:sys_bitmap_copy_ptr to REG_A
+    write OP_INCR to REG_OP
+    cpu_exec
+    copy REG_RES to var:sys_bitmap_copy_ptr
+
+    jump label:sys_stack_pop
+
+label main_loop
+    write COLOR_BLUE to DISPLAY_BACKGROUND
+    write OP_SET_BACKGROUND_COLOR to REG_OP
+    cpu_exec
+
+    copy var:sys_bitmap_copy_start to REG_A
+    copy var:sys_bitmap_copy_ptr to REG_B  // The first address after the end of the bitmap
+    write OP_RENDER_BITMAP to REG_OP
+    cpu_exec
+
+    //Read keyboard input
+    write KEYBOARD_READ_CHAR_SILENTLY to REG_A
+    write OP_READ_INPUT to REG_OP
+    cpu_exec
+    copy KEYBOARD_BUFFER to var:sys_input_char
+
+    //Compare input with 'a' for left shift
+    copy var:sys_input_char to REG_A
+    write "a" to REG_B
+    write OP_CMP_EQ to REG_OP
+    cpu_exec
+    jump_if label:left_shift
+
+    //Compare input with 'd' for right shift
+    copy var:sys_input_char to REG_A
+    write "d" to REG_B
+    write OP_CMP_EQ to REG_OP
+    cpu_exec
+    jump_if label:right_shift
+
+    //Compare input with 'q' to exit
+    copy var:sys_input_char to REG_A
+    write "q" to REG_B
+    write OP_CMP_EQ to REG_OP
+    cpu_exec
+    jump_if label:exit_program
+
+    //Loop again if no valid input
+    jump label:main_loop
+
+label left_shift
+    // check if first line is already empty -> return
+    copy *var:sys_bitmap_copy_start to REG_A
+    write "" to REG_B
+    write OP_CMP_EQ to REG_OP
+    cpu_exec
+    jump_if label:main_loop
+
+    var j
+    write 0 to var:j
+    var current_row
+
+    label left_shift_loop
+        //Compute the address of the current row in the bitmap
+        copy var:sys_bitmap_copy_start to REG_A
+        copy var:j to REG_B
+        write OP_ADD to REG_OP
+        cpu_exec
+        copy REG_RES to var:current_row
+
+        copy *var:current_row to REG_A
+        write 1 to REG_B
+        write "" to REG_C
+        write "" to REG_D
+        write OP_REPLACE_COLUMN to REG_OP
+        cpu_exec
+        copy REG_RES to *var:current_row
+
+        //Increment row index
+        copy var:j to REG_A
+        write OP_INCR to REG_OP
+        cpu_exec
+        copy REG_RES to var:j
+
+        //Repeat for all 20 rows
+        copy var:j to REG_A
+        write 20 to REG_B
+        write OP_CMP_LT to REG_OP
+        cpu_exec
+        jump_if label:left_shift_loop
+
+        copy var:sys_shift_index to REG_A
+        write OP_DECR to REG_OP
+        cpu_exec
+        copy REG_RES to var:sys_shift_index
+        jump label:main_loop
+    
+
+label right_shift
+    var i
+    write 0 to var:i
+
+    copy var:sys_shift_index to REG_A
+    write 0 to REG_B
+    write OP_CMP_LT to REG_OP
+    cpu_exec
+    jump_if label:right_restore_column
+
+    label right_shift_loop
+        //Compute the address of the current row in the bitmap
+        copy var:sys_bitmap_copy_start to REG_A
+        copy var:i to REG_B
+        write OP_ADD to REG_OP
+        cpu_exec
+        copy REG_RES to REG_D
+
+        //Read the current row from memory
+        copy *REG_D to REG_B
+        write "b" to REG_A
+        write "" to REG_C
+        write OP_CONCAT_WITH to REG_OP
+        cpu_exec
+
+        //Store the updated row back in memory
+        copy REG_RES to *REG_D
+
+        //Increment row index
+        copy var:i to REG_A
+        write OP_INCR to REG_OP
+        cpu_exec
+        copy REG_RES to var:i
+
+        //Repeat for all 20 rows
+        copy var:i to REG_A
+        write 20 to REG_B
+        write OP_CMP_LT to REG_OP
+        cpu_exec
+        jump_if label:right_shift_loop
+
+        copy var:sys_shift_index to REG_A
+        write OP_INCR to REG_OP
+        cpu_exec
+        copy REG_RES to var:sys_shift_index
+        jump label:main_loop
+
+    label right_restore_column
+        var col_num
+        var orig_row
+        var copy_row
+
+        // Calculate absolute column index: col_num = -shift_index
+        write 0 to REG_A
+        copy var:sys_shift_index to REG_B
+        write OP_SUB to REG_OP
+        cpu_exec
+        copy REG_RES to var:col_num
+
+        label right_restore_loop
+            // Get row addresses
+            copy var:sys_bitmap_start to REG_A
+            copy var:i to REG_B
+            write OP_ADD to REG_OP
+            cpu_exec
+            copy REG_RES to var:orig_row
+
+            copy var:sys_bitmap_copy_start to REG_A
+            copy var:i to REG_B
+            write OP_ADD to REG_OP
+            cpu_exec
+            copy REG_RES to var:copy_row
+
+            // Get character from original at column col_num
+            copy *var:orig_row to REG_A
+            copy var:col_num to REG_B
+            write "" to REG_C
+            write OP_GET_COLUMN to REG_OP
+            cpu_exec  // result in REG_RES
+
+            // Add to the start of row
+            copy REG_RES to REG_A
+            copy *var:copy_row to REG_B
+            write "" to REG_C
+            write OP_CONCAT_WITH to REG_OP
+            cpu_exec
+
+            // Store new row
+            copy REG_RES to *var:copy_row
+
+            // Increment j
+            copy var:i to REG_A
+            write OP_INCR to REG_OP
+            cpu_exec
+            copy REG_RES to var:i
+
+            copy var:i to REG_A
+            write 20 to REG_B
+            write OP_CMP_LT to REG_OP
+            cpu_exec
+            jump_if label:right_restore_loop
+
+            copy var:sys_shift_index to REG_A
+            write OP_INCR to REG_OP
+            cpu_exec
+            copy REG_RES to var:sys_shift_index
+            jump label:main_loop
+
+
+label exit_program
+    write OP_HALT to REG_OP
+    cpu_exec
+
+// "bbbrrrbbb" 
+// "byyrrrrbb"
+// "bybbbrrbb" 
+// "bbbbrrbbb" 
+// "bbbrrbbbb" 
+// "bbrrbbbbb" 
+// "brrbbbbbb" 
+// "rrrrrrrbb" 
+// "rrrrrrrrb" 
+// "brrrrrrrr" 
+// "bbrrrrrbb" 
+// "bbbbyybbb"
+// "bbbbybybb"
+// "bbbbybbyb"
+// "bbbyyyybb"
+// "bbybybbbb"
+// "bbybybbbb"
+// "bbbbybbbb"
+// "bbbbybbbb"
+// "bbyyybbbb"
